@@ -79,7 +79,7 @@ Keep all values server-side. Never use `NEXT_PUBLIC_` for a database URL, auth s
 | `AUTH_SECRET` | Yes in production; required by NextAuth/Auth.js v5 | Secret used by NextAuth v5 to sign/encrypt sessions. Generate a long random value, for example with `openssl rand -base64 32`. |
 | `AUTH_URL` | Optional | Auth.js v5 canonical application URL when the request host should be overridden. It is usually omitted for local development and can be set to the deployed URL when needed. This is the v5 `AUTH_*` name; `NEXTAUTH_URL` is not required by this configuration. |
 | `AUTH_TRUST_HOST` | Optional | Set to `true` when a self-hosted reverse proxy requires Auth.js to trust the forwarded host. Vercel normally supplies a trusted platform signal. |
-| `APP_BASE_URL` | Optional locally; recommended in deployment | Base URL used when an admin creates an invite link. When omitted locally, invite links use the current request origin; set it to the public application URL in deployment. |
+| `APP_BASE_URL` | Optional locally; required in production | Base URL used when an admin creates an invite link. When omitted locally, invite links use the current request origin; production refuses to create invites until the public application URL is configured. |
 | `THE_ODDS_API_KEY` | Optional | Server-side The Odds API credential. When it is empty or absent, the app serves mock data. When present, a manual refresh can make paid provider requests. |
 | `ODDS_API_REGION` | Optional | The Odds API region parameter; defaults to `us`. |
 | `ODDS_API_BOOKMAKERS` | Optional | Comma-separated sportsbook keys requested from The Odds API. Defaults to `draftkings,fanduel,betmgm,williamhill_us,espnbet,fanatics`. |

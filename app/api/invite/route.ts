@@ -17,6 +17,14 @@ export async function POST(req: NextRequest) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return Response.json({ error: "User already exists" }, { status: 409 });
 
+  const configuredBaseUrl = process.env.APP_BASE_URL?.trim();
+  if (!configuredBaseUrl && process.env.NODE_ENV === "production") {
+    return Response.json(
+      { error: "APP_BASE_URL must be configured in production" },
+      { status: 500 },
+    );
+  }
+
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
@@ -30,7 +38,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const configuredBaseUrl = process.env.APP_BASE_URL?.trim();
   const baseUrl = configuredBaseUrl || req.nextUrl.origin;
   const inviteUrl = new URL(`/invite/${token}`, baseUrl).toString();
 
