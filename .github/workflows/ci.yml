@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -16,9 +19,9 @@ jobs:
       # provider account is required for the checks or production build.
       DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/propedge
       AUTH_SECRET: ci-only-auth-secret
-      AUTH_URL: http://localhost:3000
+      AUTH_URL: ""
       AUTH_TRUST_HOST: "true"
-      APP_BASE_URL: http://localhost:3000
+      APP_BASE_URL: ""
       THE_ODDS_API_KEY: ""
       ODDS_API_REGION: us
       ODDS_API_BOOKMAKERS: draftkings,fanduel,betmgm,williamhill_us,espnbet,fanatics
@@ -29,6 +32,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

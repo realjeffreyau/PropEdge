@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 // POST /api/invite — admin creates an invite
@@ -31,8 +30,9 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
-  const inviteUrl = `${baseUrl}/invite/${token}`;
+  const configuredBaseUrl = process.env.APP_BASE_URL?.trim();
+  const baseUrl = configuredBaseUrl || req.nextUrl.origin;
+  const inviteUrl = new URL(`/invite/${token}`, baseUrl).toString();
 
   return Response.json({ invite, inviteUrl });
 }

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/realjeffreyau/PropEdge/security/policy
+    about: Do not disclose credentials, API keys, invite tokens, or vulnerability details in a public issue.
