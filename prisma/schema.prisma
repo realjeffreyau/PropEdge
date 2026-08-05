@@ -1,0 +1,535 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth & Users ─────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MEMBER_READONLY
+  MEMBER_FULL
+}
+
+enum InviteStatus {
+  INVITED
+  ACTIVE
+  REVOKED
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String?
+  passwordHash  String?
+  role          UserRole     @default(MEMBER_READONLY)
+  inviteStatus  InviteStatus @default(INVITED)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  lastLoginAt   DateTime?
+
+  invitesCreated  Invite[]       @relation("InviteCreator")
+  watchlistItems  WatchlistItem[]
+  savedProps      SavedProp[]
+  alerts          Alert[]
+  backtests       Backtest[]
+  shareLinks      ShareLink[]
+
+  @@map("users")
+}
+
+model Invite {
+  id              String    @id @default(cuid())
+  email           String
+  role            UserRole  @default(MEMBER_READONLY)
+  token           String    @unique
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+
+  createdBy User @relation("InviteCreator", fields: [createdByUserId], references: [id])
+
+  @@map("invites")
+}
+
+// ─── Share Links ──────────────────────────────────────────────────────────
+
+enum ShareLinkType {
+  DASHBOARD_VIEW
+  PICK_DETAIL
+  BOOK_VIEW
+  PROP_VIEW
+}
+
+model ShareLink {
+  id              String        @id @default(cuid())
+  token           String        @unique
+  type            ShareLinkType
+  filtersJson     Json?
+  targetId        String?
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  createdByUserId String
+  createdAt       DateTime      @default(now())
+
+  createdBy User @relation(fields: [createdByUserId], references: [id])
+
+  @@map("share_links")
+}
+
+// ─── Sports & Leagues ─────────────────────────────────────────────────────
+
+model Sport {
+  id     String  @id @default(cuid())
+  key    String  @unique
+  name   String
+  active Boolean @default(true)
+
+  leagues  League[]
+  teams    Team[]
+  players  Player[]
+  games    Game[]
+  props    Prop[]
+  picks    Pick[]
+  alerts   Alert[]
+  backtests Backtest[]
+
+  @@map("sports")
+}
+
+model League {
+  id      String @id @default(cuid())
+  sportId String
+  key     String
+  name    String
+
+  sport Sport  @relation(fields: [sportId], references: [id])
+  games Game[]
+
+  @@unique([sportId, key])
+  @@map("leagues")
+}
+
+// ─── Teams & Players ─────────────────────────────────────────────────────
+
+model Team {
+  id           String  @id @default(cuid())
+  sportId      String
+  leagueId     String?
+  externalId   String?
+  name         String
+  abbreviation String?
+
+  sport   Sport    @relation(fields: [sportId], references: [id])
+  players Player[]
+  props   Prop[]
+
+  @@unique([sportId, externalId])
+  @@map("teams")
+}
+
+model Player {
+  id             String  @id @default(cuid())
+  sportId        String
+  teamId         String?
+  externalId     String?
+  name           String
+  normalizedName String
+  position       String?
+
+  sport  Sport   @relation(fields: [sportId], references: [id])
+  team   Team?   @relation(fields: [teamId], references: [id])
+  props  Prop[]
+  picks  Pick[]
+
+  @@index([normalizedName])
+  @@map("players")
+}
+
+// ─── Games ────────────────────────────────────────────────────────────────
+
+model Game {
+  id            String   @id @default(cuid())
+  sportId       String
+  leagueId      String?
+  externalId    String   @unique
+  homeTeamId    String?
+  awayTeamId    String?
+  homeTeamName  String
+  awayTeamName  String
+  commenceTime  DateTime
+  status        String   @default("scheduled")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sport   Sport    @relation(fields: [sportId], references: [id])
+  league  League?  @relation(fields: [leagueId], references: [id])
+
+  markets       Market[]
+  props         Prop[]
+  oddsSnapshots OddsSnapshot[]
+  propOddsSnapshots PropOddsSnapshot[]
+  picks         Pick[]
+
+  @@index([sportId, commenceTime])
+  @@map("games")
+}
+
+// ─── Bookmakers ───────────────────────────────────────────────────────────
+
+enum BookmakerType {
+  SPORTSBOOK
+  DFS
+  EXCHANGE
+  OTHER
+}
+
+model Bookmaker {
+  id             String        @id @default(cuid())
+  key            String        @unique
+  name           String
+  region         String        @default("us")
+  type           BookmakerType @default(SPORTSBOOK)
+  active         Boolean       @default(true)
+  supportsProps  Boolean       @default(false)
+  isSharpBook    Boolean       @default(false)
+  displayOrder   Int           @default(99)
+
+  oddsSnapshots     OddsSnapshot[]
+  propOddsSnapshots PropOddsSnapshot[]
+  picks             Pick[]
+  alerts            Alert[]
+  refreshLogs       RefreshLog[]
+  bestAvailablePicks Pick[]    @relation("BestAvailableBook")
+
+  @@map("bookmakers")
+}
+
+// ─── Markets ──────────────────────────────────────────────────────────────
+
+model Market {
+  id          String  @id @default(cuid())
+  gameId      String
+  marketType  String
+  marketKey   String
+  label       String
+  playerId    String?
+  teamId      String?
+  point       Float?
+  active      Boolean @default(true)
+
+  game          Game           @relation(fields: [gameId], references: [id])
+  oddsSnapshots OddsSnapshot[]
+  picks         Pick[]
+
+  @@index([gameId, marketKey])
+  @@map("markets")
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────
+
+model Prop {
+  id                   String   @id @default(cuid())
+  sportId              String
+  gameId               String
+  playerId             String?
+  playerName           String
+  teamId               String?
+  teamName             String?
+  marketKey            String
+  marketLabel          String
+  normalizedMarketKey  String
+  side                 String
+  line                 Float
+  commenceTime         DateTime
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  sport   Sport    @relation(fields: [sportId], references: [id])
+  game    Game     @relation(fields: [gameId], references: [id])
+  player  Player?  @relation(fields: [playerId], references: [id])
+  team    Team?    @relation(fields: [teamId], references: [id])
+
+  oddsSnapshots PropOddsSnapshot[]
+  picks         Pick[]
+
+  @@index([sportId, marketKey])
+  @@index([playerName, marketKey])
+  @@map("props")
+}
+
+// ─── Odds Snapshots ───────────────────────────────────────────────────────
+
+model OddsSnapshot {
+  id             String   @id @default(cuid())
+  gameId         String
+  marketId       String
+  bookmakerId    String
+  outcomeName    String
+  priceAmerican  Int?
+  priceDecimal   Float?
+  point          Float?
+  timestamp      DateTime @default(now())
+  provider       String   @default("the_odds_api")
+  rawJson        Json?
+
+  game      Game      @relation(fields: [gameId], references: [id])
+  market    Market    @relation(fields: [marketId], references: [id])
+  bookmaker Bookmaker @relation(fields: [bookmakerId], references: [id])
+
+  @@index([gameId, timestamp])
+  @@index([marketId, bookmakerId, timestamp])
+  @@map("odds_snapshots")
+}
+
+model PropOddsSnapshot {
+  id             String   @id @default(cuid())
+  propId         String
+  gameId         String
+  bookmakerId    String
+  outcomeName    String
+  side           String
+  priceAmerican  Int?
+  priceDecimal   Float?
+  line           Float?
+  timestamp      DateTime @default(now())
+  provider       String   @default("the_odds_api")
+  rawJson        Json?
+
+  prop      Prop      @relation(fields: [propId], references: [id])
+  game      Game      @relation(fields: [gameId], references: [id])
+  bookmaker Bookmaker @relation(fields: [bookmakerId], references: [id])
+
+  @@index([propId, timestamp])
+  @@index([gameId, bookmakerId, timestamp])
+  @@map("prop_odds_snapshots")
+}
+
+// ─── Picks (ranked picks shown in dashboard) ─────────────────────────────
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum PickStatus {
+  ACTIVE
+  EXPIRED
+  RESULT_WIN
+  RESULT_LOSS
+  RESULT_PUSH
+  VOID
+}
+
+model Pick {
+  id                           String     @id @default(cuid())
+  sportId                      String
+  gameId                       String
+  propId                       String?
+  marketId                     String?
+  bookmakerId                  String
+  bookmakerKey                 String
+  bookType                     BookmakerType
+  playerName                   String?
+  playerId                     String?
+  teamName                     String?
+  marketKey                    String
+  marketLabel                  String
+  side                         String
+  line                         Float?
+  oddsAmerican                 Int?
+  oddsDecimal                  Float?
+  bestAvailableBookmakerId     String?
+  bestAvailableOddsAmerican    Int?
+  marketConsensusProbability   Float?
+  estimatedProbability         Float
+  noVigProbability             Float?
+  impliedProbability           Float?
+  edgePercent                  Float?
+  evPercent                    Float?
+  fairOddsAmerican             Int?
+  liquidityScore               Float
+  whaleScore                   Float?
+  evScore                      Float
+  probabilityEdgeScore         Float
+  dataQualityScore             Float
+  confidenceScore              Float
+  riskLevel                    RiskLevel  @default(MEDIUM)
+  explanation                  String
+  status                       PickStatus @default(ACTIVE)
+  createdAt                    DateTime   @default(now())
+  updatedAt                    DateTime   @updatedAt
+
+  sport                 Sport      @relation(fields: [sportId], references: [id])
+  game                  Game       @relation(fields: [gameId], references: [id])
+  prop                  Prop?      @relation(fields: [propId], references: [id])
+  market                Market?    @relation(fields: [marketId], references: [id])
+  bookmaker             Bookmaker  @relation(fields: [bookmakerId], references: [id])
+  bestAvailableBookmaker Bookmaker? @relation("BestAvailableBook", fields: [bestAvailableBookmakerId], references: [id])
+  player                Player?    @relation(fields: [playerId], references: [id])
+
+  signals        PickSignal[]
+  watchlistItems WatchlistItem[]
+
+  @@index([sportId, status, createdAt])
+  @@index([bookmakerId, sportId])
+  @@map("picks")
+}
+
+model PickSignal {
+  id           String   @id @default(cuid())
+  pickId       String
+  signalType   String
+  score        Float?
+  label        String
+  description  String
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  pick Pick @relation(fields: [pickId], references: [id], onDelete: Cascade)
+
+  @@index([pickId])
+  @@map("pick_signals")
+}
+
+// ─── Watchlist & Alerts ───────────────────────────────────────────────────
+
+model WatchlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  pickId    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  pick Pick @relation(fields: [pickId], references: [id])
+
+  @@unique([userId, pickId])
+  @@map("watchlist_items")
+}
+
+model SavedProp {
+  id        String   @id @default(cuid())
+  userId    String
+  propId    String
+  sportKey  String
+  note      String?
+  snapshot  Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, propId])
+  @@map("saved_props")
+}
+
+model Alert {
+  id             String   @id @default(cuid())
+  userId         String
+  name           String
+  sportId        String?
+  bookmakerId    String?
+  marketType     String?
+  conditionType  String
+  threshold      Float
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  sport     Sport?     @relation(fields: [sportId], references: [id])
+  bookmaker Bookmaker? @relation(fields: [bookmakerId], references: [id])
+
+  @@map("alerts")
+}
+
+// ─── Backtesting ──────────────────────────────────────────────────────────
+
+model Backtest {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  sportId      String
+  bookmakerId  String?
+  marketTypes  String[]
+  dateStart    DateTime
+  dateEnd      DateTime
+  filtersJson  Json?
+  resultsJson  Json?
+  createdAt    DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  sport Sport @relation(fields: [sportId], references: [id])
+
+  @@map("backtests")
+}
+
+// ─── Model Settings ───────────────────────────────────────────────────────
+
+model ModelSettings {
+  id                          String   @id @default(cuid())
+  evWeight                    Float    @default(0.40)
+  liquidityWeight             Float    @default(0.25)
+  probabilityEdgeWeight       Float    @default(0.20)
+  whaleWeight                 Float    @default(0.0)
+  dataQualityWeight           Float    @default(0.15)
+  minConfidenceToShow         Float    @default(0.0)
+  refreshIntervalMinutes      Int      @default(10)
+  propRefreshIntervalMinutes  Int      @default(10)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@map("model_settings")
+}
+
+// ─── API Provider Config ──────────────────────────────────────────────────
+
+model ApiProviderConfig {
+  id           String   @id @default(cuid())
+  providerName String   @unique
+  enabled      Boolean  @default(true)
+  envVarName   String
+  settingsJson Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("api_provider_configs")
+}
+
+// ─── Refresh Logs ─────────────────────────────────────────────────────────
+
+model RefreshLog {
+  id              String    @id @default(cuid())
+  provider        String
+  sportKey        String
+  marketType      String
+  bookmakerId     String?
+  status          String
+  creditsUsed     Int?
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+  errorMessage    String?
+
+  bookmaker Bookmaker? @relation(fields: [bookmakerId], references: [id])
+
+  @@index([provider, startedAt])
+  @@map("refresh_logs")
+}
+
+// ─── Prop Feed Cache ─────────────────────────────────────────────────────
+
+model PropFeedSnapshot {
+  id        String   @id @default(cuid())
+  sportKey  String
+  fetchedAt DateTime @default(now())
+  propCount Int
+  payload   Json
+
+  @@index([sportKey, fetchedAt])
+  @@map("prop_feed_snapshots")
+}
