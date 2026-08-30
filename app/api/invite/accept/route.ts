@@ -4,13 +4,31 @@ import bcrypt from "bcryptjs";
 
 // POST /api/invite/accept — accept invite and set password
 export async function POST(req: NextRequest) {
-  const { token, name, password } = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: "A valid JSON body is required" }, { status: 400 });
+  }
 
-  if (!token || !password) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return Response.json({ error: "The request body must be an object" }, { status: 400 });
+  }
+
+  const raw = body as { token?: unknown; name?: unknown; password?: unknown };
+  const token = typeof raw.token === "string" ? raw.token.trim() : "";
+  const name = typeof raw.name === "string" ? raw.name.trim().slice(0, 100) : "";
+  const password = typeof raw.password === "string" ? raw.password : "";
+
+  if (!/^[a-f0-9]{64}$/i.test(token) || !password) {
     return Response.json({ error: "Token and password required" }, { status: 400 });
   }
-  if (password.length < 8) {
+  if (password.length < 8 || password.length > 256) {
     return Response.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+  }
+
+  if (raw.name !== undefined && typeof raw.name !== "string") {
+    return Response.json({ error: "name must be text when provided" }, { status: 400 });
   }
 
   const invite = await prisma.invite.findUnique({ where: { token } });

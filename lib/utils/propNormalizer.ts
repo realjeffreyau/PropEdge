@@ -47,7 +47,7 @@ export function buildPropGroupKey(
 }
 
 // Normalize side labels from raw API responses
-export function normalizeSide(outcomeName: string, description?: string): string {
+export function normalizeSide(outcomeName: string): string {
   const lower = outcomeName.toLowerCase();
   if (lower === "over") return "Over";
   if (lower === "under") return "Under";

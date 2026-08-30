@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please report suspected vulnerabilities privately. Once this repository is published, use GitHub's private vulnerability reporting or security advisory form from the repository's **Security** tab. If that feature is unavailable, contact the maintainers through a private, non-public channel before sharing details. Do not open a public issue for an unpatched vulnerability.
+Please report suspected vulnerabilities privately through [GitHub's security advisory form](https://github.com/realjeffreyau/PropEdge/security/advisories/new). If private reporting is unavailable, contact the repository owner through a private, non-public channel before sharing details. Do not open a public issue for an unpatched vulnerability.
 
 Include the affected area, a clear reproduction or proof of concept, the potential impact, and any suggested mitigation. Please allow maintainers reasonable time to investigate and release a fix before public disclosure.
 
@@ -16,7 +16,7 @@ Reports are welcome for issues that could cause unauthorized access or data expo
 - unsafe handling of database queries, route-handler inputs, or provider responses;
 - vulnerabilities introduced by application dependencies or the deployment configuration.
 
-The public repository, mock data, documented placeholder values, and known unimplemented features are not themselves vulnerabilities. Do not use real accounts, real personal data, or live provider credits while testing.
+The public repository, mock data, documented example values, and known unimplemented features are not themselves vulnerabilities. Do not use real accounts, real personal data, or live provider credits while testing.
 
 ## Secret-handling warning
 

@@ -14,22 +14,27 @@ const PUBLIC_PATHS = [
   "/favicon.ico",
 ];
 
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((publicPath) => (
+    pathname === publicPath || pathname.startsWith(`${publicPath}/`)
+  ));
+}
+
 export default auth((req) => {
   const { nextUrl } = req as NextRequest;
   const session = req.auth;
   const path = nextUrl.pathname;
 
-  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
-  if (isPublic) return NextResponse.next();
+  if (isPublicPath(path)) return NextResponse.next();
 
   if (!session) {
     const loginUrl = new URL("/login", nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", path);
+    loginUrl.searchParams.set("callbackUrl", `${path}${nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
   // Non-admin users can't access /admin
-  if (path.startsWith("/admin") && session.user.role !== "ADMIN") {
+  if ((path === "/admin" || path.startsWith("/admin/")) && session.user.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard", nextUrl.origin));
   }
 

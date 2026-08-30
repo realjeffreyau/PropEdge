@@ -16,7 +16,10 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const requestedCallbackUrl = searchParams.get("callbackUrl");
+  const callbackUrl = requestedCallbackUrl?.startsWith("/") && !requestedCallbackUrl.startsWith("//")
+    ? requestedCallbackUrl
+    : "/dashboard";
   const errorParam = searchParams.get("error");
 
   const [email, setEmail] = useState("");
@@ -66,7 +69,7 @@ function LoginForm() {
           </div>
           <div className="text-center">
             <h1 className="text-xl font-display font-semibold text-foreground tracking-tight">PropEdge</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Private analytics · Invite only</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Market analytics · Invite only</p>
           </div>
         </div>
 

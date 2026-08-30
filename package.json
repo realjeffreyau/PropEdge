@@ -1,7 +1,7 @@
 {
   "name": "propedge",
   "version": "0.1.0",
-  "description": "Private, invite-only NBA/WNBA player-prop analytics dashboard with market-derived cross-book odds analysis.",
+  "description": "Invite-only NBA/WNBA player-prop analytics dashboard with market-derived cross-book odds analysis.",
   "keywords": [
     "sports analytics",
     "player props",
@@ -21,7 +21,8 @@
   },
   "private": true,
   "overrides": {
-    "@hono/node-server": "2.1.0"
+    "@hono/node-server": "2.1.0",
+    "deepmerge-ts": "8.0.2"
   },
   "scripts": {
     "dev": "next dev",
@@ -68,12 +69,12 @@
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^10",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.1",
     "shadcn": "^4.18.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^7",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }

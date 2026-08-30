@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 // Edge-compatible config — no Prisma, no Node.js-only modules.
-// Used by middleware.ts for JWT validation.
+// Used by proxy.ts for JWT validation.
 export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   pages: {

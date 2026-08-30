@@ -1,10 +1,14 @@
 # PropEdge
 
-PropEdge is a private, invite-only NBA/WNBA player-prop analytics dashboard that puts cross-book prices and market-derived fair-value estimates in one read-only workspace.
+PropEdge is an invite-only NBA/WNBA player-prop analytics dashboard that puts cross-book prices and market-derived fair-value estimates in one read-only workspace.
 
 It solves the practical problem of comparing the same player prop across multiple books without hiding how the estimate was produced: users can inspect the available price, line, market coverage, data-quality warnings, and the score components behind a ranked prop.
 
 > **Important disclaimer:** PropEdge is an analytics tool, not financial, investment, or betting advice. Its probabilities are market-derived estimates, not guarantees. Sports betting is legal only in some jurisdictions; users are responsible for their own compliance, must be of legal age, and should gamble responsibly. For help with problem gambling, contact the National Problem Gambling Helpline at **1-800-522-4700**.
+
+## Project status
+
+This is a public portfolio project and reference implementation, not a hosted betting service. The application is designed for invited users, supports deterministic mock data for local evaluation, and can optionally connect to a paid odds provider. It does not place bets or claim to predict outcomes.
 
 ## What exists today
 
@@ -22,17 +26,6 @@ PropEdge is intentionally scoped as a read-only analytics product. The current a
 - **Backtesting — not implemented** — the route documents the missing historical odds and settled-result inputs; it does not show simulated performance or benchmark claims.
 
 Bet placement is not implemented. PropEdge does not place bets, submit bet slips, or automate sportsbook actions; see [`BetPlacementRoadmap.md`](BetPlacementRoadmap.md) for the explicitly separate future roadmap.
-
-## Screenshots
-
-The following paths are placeholders for real captures:
-
-- `docs/screenshots/dashboard.png`
-- `docs/screenshots/props.png`
-- `docs/screenshots/odds-matrix.png`
-- `docs/screenshots/admin-invites.png`
-
-Add real, non-sensitive captures at those paths before publishing screenshots. Do not use real user data, invite tokens, API keys, or other secrets in screenshots.
 
 ## Stack
 
@@ -58,7 +51,7 @@ Add real, non-sensitive captures at those paths before publishing screenshots. D
 ```bash
 git clone https://github.com/realjeffreyau/PropEdge.git
 cd propedge
-npm install
+npm ci
 cp .env.example .env
 # Edit .env with a real DATABASE_URL and a locally generated AUTH_SECRET.
 npm run db:generate
@@ -122,7 +115,7 @@ lib/             Odds provider, normalization, scoring, cache, mock data, and ho
 prisma/          Prisma schema and database seed script
 types/            Shared application and NextAuth types
 public/           Static assets
-docs/             Documentation assets and screenshot placeholders
+docs/             Documentation and release notes
 ```
 
 ### Request, refresh, and cache flow
@@ -176,6 +169,10 @@ Supabase exposes different Postgres connection options for pooled application tr
 ## License
 
 PropEdge is released under the [MIT License](LICENSE). The source repository is hosted at [github.com/realjeffreyau/PropEdge](https://github.com/realjeffreyau/PropEdge).
+
+## Production boundary
+
+Before operating a public deployment, review the authentication and invite controls, add deployment-level rate limiting and monitoring, configure HTTPS and secure server-side secrets, confirm database backups and access policies, and verify that provider data may be displayed under the provider's terms. The repository includes a working reference implementation and CI checks; it is not a claim of production compliance, betting advice, or guaranteed data accuracy.
 
 ## Disclaimer
 

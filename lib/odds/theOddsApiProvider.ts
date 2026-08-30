@@ -1,13 +1,10 @@
 import type {
   OddsApiEvent,
-  OddsApiBookmaker,
   NormalizedEvent,
   NormalizedPropGroup,
   OddsApiUsage,
-  RefreshResult,
 } from "./types";
-import { normalizePlayerName, normalizeSide, extractPlayerName, buildPropGroupKey } from "@/lib/utils/propNormalizer";
-import { americanToDecimal, decimalToAmerican } from "@/lib/utils/oddsConversions";
+import { normalizeSide, extractPlayerName, buildPropGroupKey } from "@/lib/utils/propNormalizer";
 
 const BASE_URL = "https://api.the-odds-api.com/v4";
 

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: "PropEdge",
     template: "%s · PropEdge",
   },
-  description: "Private sports betting analytics dashboard for NBA and WNBA player props.",
+  description: "Invite-only market analytics dashboard for NBA and WNBA player props.",
 };
 
 export default function RootLayout({

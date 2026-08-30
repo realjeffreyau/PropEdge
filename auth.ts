@@ -14,17 +14,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        const email = typeof credentials?.email === "string"
+          ? credentials.email.trim().toLowerCase()
+          : "";
+        const password = typeof credentials?.password === "string"
+          ? credentials.password
+          : "";
+
+        // Reject oversized passwords before invoking the intentionally expensive
+        // password-hash comparison.
+        if (!email || !password || password.length > 256) return null;
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email },
         });
 
         if (!user || user.inviteStatus !== "ACTIVE") return null;
         if (!user.passwordHash) return null;
 
         const valid = await bcrypt.compare(
-          credentials.password as string,
+          password,
           user.passwordHash
         );
         if (!valid) return null;

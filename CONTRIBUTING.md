@@ -7,7 +7,7 @@ Thanks for helping improve PropEdge. Keep contributions focused on the read-only
 Use Node.js 20 or newer and npm:
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 # Set DATABASE_URL and AUTH_SECRET, plus optional admin/provider values.
 npm run db:generate
